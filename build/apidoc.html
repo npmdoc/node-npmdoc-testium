@@ -1,0 +1,434 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/groupon-testium/testium"
+
+    >testium (v3.3.1)</a>
+</h1>
+<h4>Synchronous integration testing with Node.js bindings for WebDriver</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.testium">module testium</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.testium.getBrowser">
+            function <span class="apidocSignatureSpan">testium.</span>getBrowser
+            <span class="apidocSignatureSpan">(options, callback)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.testium.getTestium">
+            function <span class="apidocSignatureSpan">testium.</span>getTestium
+            <span class="apidocSignatureSpan">(options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.testium.mocha">
+            function <span class="apidocSignatureSpan">testium.</span>mocha
+            <span class="apidocSignatureSpan">(options)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.testium.mocha">module testium.mocha</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.testium.mocha.mocha">
+            function <span class="apidocSignatureSpan">testium.</span>mocha
+            <span class="apidocSignatureSpan">(options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.testium.mocha.default">
+            function <span class="apidocSignatureSpan">testium.mocha.</span>default
+            <span class="apidocSignatureSpan">(options)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">testium.mocha.</span>browser</span>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.testium" id="apidoc.module.testium">module testium</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.testium.getBrowser" id="apidoc.element.testium.getBrowser">
+        function <span class="apidocSignatureSpan">testium.</span>getBrowser
+        <span class="apidocSignatureSpan">(options, callback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">getBrowser = function (options, callback) {
+  if (typeof options === &#x27;function&#x27;) {
+    callback = options;
+    options = {};
+  }
+  return getBrowser(options).nodeify(callback);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.testium.getTestium" id="apidoc.element.testium.getTestium">
+        function <span class="apidocSignatureSpan">testium.</span>getTestium
+        <span class="apidocSignatureSpan">(options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function getTestium(options) {
+  var config = getConfig();
+  var localConfig = config.createShallowChild(options);
+
+  var reuseSession = localConfig.get(&#x27;reuseSession&#x27;, true);
+  var keepCookies = localConfig.get(&#x27;keepCookies&#x27;, false);
+  var driverFactory = resolveDriver(localConfig.get(&#x27;driver&#x27;, &#x27;sync&#x27;));
+
+  var isExistingSession = reuseSession &#x26;&#x26; !!driverFactory.instance;
+  var skipPriming = isExistingSession;
+  if (skipPriming) {
+    debug(&#x27;Skipping priming load&#x27;);
+  }
+
+  function generateDriverError(error) {
+    var logName = config.get(&#x27;browser&#x27;) === &#x27;phantomjs&#x27; ? &#x27;phantomjs.log&#x27; : &#x27;selenium.log&#x27;;
+
+    error.message = [
+      &#x27;Failed to initialize WebDriver. Check &#x27; + logName + &#x27;.&#x27;,
+      error.message
+    ].join(&#x27;\n&#x27;);
+
+    throw error;
+  }
+
+  return initTestiumOnce(config)
+    .then(reuseSession ? driverFactory.once : driverFactory.create)
+    .then(resetViewport)
+    .then(keepCookies ? _.identity : clearCookies)
+    .then(skipPriming ? _.identity : primingLoad)
+    .catch(generateDriverError);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.testium.mocha" id="apidoc.element.testium.mocha">
+        function <span class="apidocSignatureSpan">testium.</span>mocha
+        <span class="apidocSignatureSpan">(options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function injectBrowser(options) {
+  options = _.extend({
+    reuseSession: true,
+  }, options || {});
+
+  return function injectBrowserHook() {
+    var self = this;
+    var runnable = this._runnable;
+
+    if (runnable.title === DEFAULT_TITLE) {
+      runnable.title = BETTER_TITLE;
+    }
+
+    var initialConfig = getConfig();
+
+    var mochaTimeout = +initialConfig.get(&#x27;mocha.timeout&#x27;, 20000);
+    var mochaSlow = +initialConfig.get(&#x27;mocha.slow&#x27;, 2000);
+
+    function setMochaTimeouts(suite) {
+      suite.timeout(mochaTimeout);
+      suite.slow(mochaSlow);
+    }
+
+    function deepMochaTimeouts(suite) {
+      setMochaTimeouts(suite);
+      suite.suites.forEach(deepMochaTimeouts);
+      suite.tests.forEach(setMochaTimeouts);
+      suite._beforeEach.forEach(setMochaTimeouts);
+      suite._beforeAll.forEach(setMochaTimeouts);
+      suite._afterEach.forEach(setMochaTimeouts);
+      suite._afterAll.forEach(setMochaTimeouts);
+    }
+
+    debug(&#x27;Overriding mocha timeouts&#x27;, mochaTimeout, mochaSlow);
+    var parentSuite = runnable.parent;
+    deepMochaTimeouts(parentSuite);
+
+    var initialTimeout = +initialConfig.get(&#x27;app.timeout&#x27;, 0) + mochaTimeout;
+    this.timeout(initialTimeout);
+
+    function setupHooks(testium) {
+<span class="apidocCodeCommentSpan">      /* eslint no-proto:0 */
+</span>      GlobalBrowser.__proto__ = self.browser = testium.browser;
+      var config = testium.config;
+
+      var snapshotDirectory = config.get(&#x27;snapshotDirectory&#x27;,
+                              config.get(&#x27;screenshotDirectory&#x27;, null));
+      if (snapshotDirectory) {
+        snapshotDirectory = path.resolve(config.root, snapshotDirectory);
+
+        var afterEachHook = _.partial(takeSnapshotOnFailure, snapshotDirectory);
+        parentSuite.afterEach(&#x27;takeSnapshotOnFailure&#x27;, afterEachHook);
+      } else {
+        debug(&#x27;Snapshots are disabled&#x27;);
+      }
+
+      var browserScopeSuite =
+        options.reuseSession ? getRootSuite(parentSuite) : parentSuite;
+
+      addCloseBrowserHook(browserScopeSuite, testium.browser);
+    }
+
+    return getTestium(options).then(setupHooks);
+  };
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.testium.mocha" id="apidoc.module.testium.mocha">module testium.mocha</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.testium.mocha.mocha" id="apidoc.element.testium.mocha.mocha">
+        function <span class="apidocSignatureSpan">testium.</span>mocha
+        <span class="apidocSignatureSpan">(options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function injectBrowser(options) {
+  options = _.extend({
+    reuseSession: true,
+  }, options || {});
+
+  return function injectBrowserHook() {
+    var self = this;
+    var runnable = this._runnable;
+
+    if (runnable.title === DEFAULT_TITLE) {
+      runnable.title = BETTER_TITLE;
+    }
+
+    var initialConfig = getConfig();
+
+    var mochaTimeout = +initialConfig.get(&#x27;mocha.timeout&#x27;, 20000);
+    var mochaSlow = +initialConfig.get(&#x27;mocha.slow&#x27;, 2000);
+
+    function setMochaTimeouts(suite) {
+      suite.timeout(mochaTimeout);
+      suite.slow(mochaSlow);
+    }
+
+    function deepMochaTimeouts(suite) {
+      setMochaTimeouts(suite);
+      suite.suites.forEach(deepMochaTimeouts);
+      suite.tests.forEach(setMochaTimeouts);
+      suite._beforeEach.forEach(setMochaTimeouts);
+      suite._beforeAll.forEach(setMochaTimeouts);
+      suite._afterEach.forEach(setMochaTimeouts);
+      suite._afterAll.forEach(setMochaTimeouts);
+    }
+
+    debug(&#x27;Overriding mocha timeouts&#x27;, mochaTimeout, mochaSlow);
+    var parentSuite = runnable.parent;
+    deepMochaTimeouts(parentSuite);
+
+    var initialTimeout = +initialConfig.get(&#x27;app.timeout&#x27;, 0) + mochaTimeout;
+    this.timeout(initialTimeout);
+
+    function setupHooks(testium) {
+<span class="apidocCodeCommentSpan">      /* eslint no-proto:0 */
+</span>      GlobalBrowser.__proto__ = self.browser = testium.browser;
+      var config = testium.config;
+
+      var snapshotDirectory = config.get(&#x27;snapshotDirectory&#x27;,
+                              config.get(&#x27;screenshotDirectory&#x27;, null));
+      if (snapshotDirectory) {
+        snapshotDirectory = path.resolve(config.root, snapshotDirectory);
+
+        var afterEachHook = _.partial(takeSnapshotOnFailure, snapshotDirectory);
+        parentSuite.afterEach(&#x27;takeSnapshotOnFailure&#x27;, afterEachHook);
+      } else {
+        debug(&#x27;Snapshots are disabled&#x27;);
+      }
+
+      var browserScopeSuite =
+        options.reuseSession ? getRootSuite(parentSuite) : parentSuite;
+
+      addCloseBrowserHook(browserScopeSuite, testium.browser);
+    }
+
+    return getTestium(options).then(setupHooks);
+  };
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.testium.mocha.default" id="apidoc.element.testium.mocha.default">
+        function <span class="apidocSignatureSpan">testium.mocha.</span>default
+        <span class="apidocSignatureSpan">(options)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function injectBrowser(options) {
+  options = _.extend({
+    reuseSession: true,
+  }, options || {});
+
+  return function injectBrowserHook() {
+    var self = this;
+    var runnable = this._runnable;
+
+    if (runnable.title === DEFAULT_TITLE) {
+      runnable.title = BETTER_TITLE;
+    }
+
+    var initialConfig = getConfig();
+
+    var mochaTimeout = +initialConfig.get(&#x27;mocha.timeout&#x27;, 20000);
+    var mochaSlow = +initialConfig.get(&#x27;mocha.slow&#x27;, 2000);
+
+    function setMochaTimeouts(suite) {
+      suite.timeout(mochaTimeout);
+      suite.slow(mochaSlow);
+    }
+
+    function deepMochaTimeouts(suite) {
+      setMochaTimeouts(suite);
+      suite.suites.forEach(deepMochaTimeouts);
+      suite.tests.forEach(setMochaTimeouts);
+      suite._beforeEach.forEach(setMochaTimeouts);
+      suite._beforeAll.forEach(setMochaTimeouts);
+      suite._afterEach.forEach(setMochaTimeouts);
+      suite._afterAll.forEach(setMochaTimeouts);
+    }
+
+    debug(&#x27;Overriding mocha timeouts&#x27;, mochaTimeout, mochaSlow);
+    var parentSuite = runnable.parent;
+    deepMochaTimeouts(parentSuite);
+
+    var initialTimeout = +initialConfig.get(&#x27;app.timeout&#x27;, 0) + mochaTimeout;
+    this.timeout(initialTimeout);
+
+    function setupHooks(testium) {
+<span class="apidocCodeCommentSpan">      /* eslint no-proto:0 */
+</span>      GlobalBrowser.__proto__ = self.browser = testium.browser;
+      var config = testium.config;
+
+      var snapshotDirectory = config.get(&#x27;snapshotDirectory&#x27;,
+                              config.get(&#x27;screenshotDirectory&#x27;, null));
+      if (snapshotDirectory) {
+        snapshotDirectory = path.resolve(config.root, snapshotDirectory);
+
+        var afterEachHook = _.partial(takeSnapshotOnFailure, snapshotDirectory);
+        parentSuite.afterEach(&#x27;takeSnapshotOnFailure&#x27;, afterEachHook);
+      } else {
+        debug(&#x27;Snapshots are disabled&#x27;);
+      }
+
+      var browserScopeSuite =
+        options.reuseSession ? getRootSuite(parentSuite) : parentSuite;
+
+      addCloseBrowserHook(browserScopeSuite, testium.browser);
+    }
+
+    return getTestium(options).then(setupHooks);
+  };
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
